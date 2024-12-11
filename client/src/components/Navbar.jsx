@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import CatImage from './CatImage';
 
 function Navbar({ authState, setAuthState }) {
   const navigate = useNavigate();
@@ -15,6 +16,11 @@ function Navbar({ authState, setAuthState }) {
   };
 
   return (
+    <>
+    <header>
+        <h1>Welcome to Life Organizer</h1>
+      </header>
+      <CatImage />
     <nav>
       <ul>
         {authState.isLoggedIn ? (
@@ -33,7 +39,9 @@ function Navbar({ authState, setAuthState }) {
           </>
         )}
       </ul>
+
     </nav>
+    </>
   );
 }
 

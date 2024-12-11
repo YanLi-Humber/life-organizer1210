@@ -11,6 +11,8 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home"; // Example Home page
 import CreateEvent from "./pages/CreateEvent";
 import Calendar from "./pages/Calendar";
+import Footer from './components/Footer'; 
+import CatImage from './components/CatImage'; 
 
 function App() {
   const [authState, setAuthState] = useState({
@@ -33,6 +35,7 @@ function App() {
 
   return (
     <Router>
+      {/* <CatImage /> */}
       <Navbar authState={authState} setAuthState={setAuthState} />
       <Routes>
         <Route path="/login" element={<Login setAuthState={setAuthState} />} />
@@ -44,6 +47,7 @@ function App() {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/home" element={<Home />} />
       </Routes>
+      <Footer />
     </Router>
   );
 }

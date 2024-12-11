@@ -6,6 +6,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const User = require('./models/User');
+const Event = require("./models/Event"); // Make sure to create an Event model schema
+
 const authenticateToken = require('./middleware/authMiddleware');
 const eventRoutes = require('./routes/eventRoutes'); // Ensure this path is correct
 
@@ -94,46 +96,108 @@ app.use((req, res, next) => {
     });
     
 
-    // Login route for authenticating user
+//     // Login route for authenticating user
+// // app.post("/login", (req, res) => {
+// //   const { username, email, password } = req.body;
+//   app.post("/login", (req, res) => {
+//     const { identifier, password } = req.body;
+
+//   console.log("Received data:", req.body); // Log incoming data
+
+//   // if (!password || (!username && !email)) {
+//   if (!identifier || !password) {
+//     console.log("Validation failed");
+//     return res.status(400).json({ message: "Password and either username or email are required" });
+//     // return res.status(400).json({ message: "Password and either username or email are required" });
+//   }
+
+//   // Find user by username or email
+//   // const query = username ? { username } : { email };
+//   const query = { $or: [{ username: identifier }, { email: identifier }] };
+//   User.findOne(query)
+//     .then((user) => {
+//       if (!user) {
+//         console.log("User not found");
+//         return res.status(400).json({ message: "User not found" });
+//         // return res.status(400).json({ message: "User not found" });
+//       }
+
+//       // Compare the entered password with the hashed password in the database
+//       bcrypt.compare(password, user.password, (err, isMatch) => {
+//         if (err) {
+//           console.error("Error comparing passwords:", err);
+//           throw err;
+//         }
+//         // if (err) throw err;
+//         if (!isMatch) {
+//           console.log("Invalid credentials");
+//           return res.status(400).json({ message: "Invalid credentials" });
+//           // return res.status(400).json({ message: "Invalid credentials" });
+//         }
+//         console.log("User authenticated successfully");
+
+//         // If passwords match, create a JWT token
+//         const token = jwt.sign({ id: user._id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '60h' });
+
+//         // Respond with user data and token
+//         res.json({
+//           message: "Login successful",
+//           user: { id: user._id, username: user.username, email: user.email },
+//           token: token
+//         });
+//       });
+//     })
+//     .catch((err) => {
+//       console.error("Error logging in:", err);
+//       res.status(500).json({ message: "Server error during login", error: err.message });
+//     });
+// });
+
 app.post("/login", (req, res) => {
-  const { username, email, password } = req.body;
+  const { identifier, password } = req.body;
 
   console.log("Received data:", req.body); // Log incoming data
 
-  if (!password || (!username && !email)) {
+  if (!identifier || !password) {
     console.log("Validation failed");
-    return res.status(400).json({ message: "Password and either username or email are required" });
-    // return res.status(400).json({ message: "Password and either username or email are required" });
+    return res.status(400).json({ message: "Identifier and password are required" });
   }
 
-  // Find user by username or email
-  const query = username ? { username } : { email };
+  // Find user by email or username
+  const query = { $or: [{ username: identifier }, { email: identifier }] };
   User.findOne(query)
     .then((user) => {
       if (!user) {
         console.log("User not found");
-        return res.status(400).json({ message: "User not found" });
-        // return res.status(400).json({ message: "User not found" });
+        return res.status(400).json({ message: "Invalid credentials" });
       }
+
+      console.log("User found:", user); // Log user details for debugging
 
       // Compare the entered password with the hashed password in the database
       bcrypt.compare(password, user.password, (err, isMatch) => {
         if (err) {
           console.error("Error comparing passwords:", err);
-          throw err;
+          return res.status(500).json({ message: "Server error during password comparison" });
         }
-        // if (err) throw err;
+
+        console.log("Password comparison result:", isMatch); // Log comparison result
+
+
         if (!isMatch) {
           console.log("Invalid credentials");
           return res.status(400).json({ message: "Invalid credentials" });
-          // return res.status(400).json({ message: "Invalid credentials" });
         }
+
         console.log("User authenticated successfully");
 
         // If passwords match, create a JWT token
-        const token = jwt.sign({ id: user._id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '60h' });
+        const token = jwt.sign(
+          { id: user._id, username: user.username },
+          process.env.JWT_SECRET,
+          { expiresIn: '60h' }
+        );
 
-        // Respond with user data and token
         res.json({
           message: "Login successful",
           user: { id: user._id, username: user.username, email: user.email },
@@ -148,6 +212,118 @@ app.post("/login", (req, res) => {
 });
 
 
+app.put("/settings", authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Create an event
+app.post("/events", authenticateToken, async (req, res) => {
+  try {
+    const { title, description, date } = req.body;
+
+    if (!title || !description || !date) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const event = new Event({
+      title,
+      description,
+      date,
+      userId: req.user.id, // Attach userId from authenticated user
+    });
+
+    await event.save();
+    res.status(201).json({ message: "Event created successfully", event });
+  } catch (error) {
+    console.error("Error creating event:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// Get all events for the logged-in user
+app.get("/events", authenticateToken, async (req, res) => {
+  try {
+    const events = await Event.find({ userId: req.user.id }).sort({ date: 1 }); // Sort by date
+    res.json(events);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get a single event by ID
+app.get("/events/:id", authenticateToken, async (req, res) => {
+  try {
+    const event = await Event.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+    res.json(event);
+  } catch (error) {
+    console.error("Error fetching event:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update an event by ID
+app.put("/events/:id", authenticateToken, async (req, res) => {
+  try {
+    const { title, description, date } = req.body;
+
+    const event = await Event.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { title, description, date },
+      { new: true } // Return the updated document
+    );
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    res.json({ message: "Event updated successfully", event });
+  } catch (error) {
+    console.error("Error updating event:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Delete an event by ID
+app.delete("/events/:id", authenticateToken, async (req, res) => {
+  try {
+    const event = await Event.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    res.json({ message: "Event deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
   //start server
   app.listen(port, () => {

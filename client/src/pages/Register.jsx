@@ -1,53 +1,109 @@
-//for hashing
 import React, { useState } from "react";
 import axios from "axios";
-
+import { useNavigate } from "react-router-dom";
 
 function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [responseMessage, setResponseMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted with email:", email, "username:", username, "and password:", password);
+
+    if (formData.password !== formData.confirmPassword) {
+      setResponseMessage("Passwords do not match!");
+      return;
+    }
 
     try {
-      const response = await axios.post("http://localhost:5001/register", { email, password, username });
-      console.log("Backend response:", response.data); // Log the response from backend
-      setResponseMessage(response.data.message);
+      const response = await axios.post("http://localhost:5001/register", {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Check for a successful registration
+      if (response.status === 200 || response.data.message === "User registered successfully") {
+        setResponseMessage("Registration successful! Redirecting to login...");
+        setTimeout(() => navigate("/login"), 2000); // Delay navigation for 2 seconds
+      } else {
+        setResponseMessage("Registration failed. Please try again.");
+      }
     } catch (error) {
-      console.error("Error registering user:", error.response?.data || error);
       setResponseMessage(error.response?.data?.message || "Registration failed");
     }
   };
-  
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleResetMessage = () => {
+    setResponseMessage("");
+  };
+
   return (
-    <div>
+    <div className="auth-container">
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}  
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="form-group">
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+          />
+        </div>
         <button type="submit">Register</button>
       </form>
-      {responseMessage && <p>{responseMessage}</p>}
+      {responseMessage && (
+        <div className="error-message">
+          <p className="message">{responseMessage}</p>
+          {responseMessage !== "Registration successful! Redirecting to login..." && (
+            <button onClick={handleResetMessage}>Try Again</button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -55,55 +111,115 @@ function Register() {
 export default Register;
 
 
-// //ok before apply hashing
+
 // import React, { useState } from "react";
 // import axios from "axios";
+// import { useNavigate } from "react-router-dom";
 
 // function Register() {
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [username, setUsername] = useState("");
+//   const [formData, setFormData] = useState({
+//     username: "",
+//     email: "",
+//     password: "",
+//     confirmPassword: "",
+//   });
 //   const [responseMessage, setResponseMessage] = useState("");
+//   const navigate = useNavigate();
 
 //   const handleSubmit = async (e) => {
 //     e.preventDefault();
-//     console.log("Form submitted with email:", email, "username:", username, "and password:", password);
+
+//     if (formData.password !== formData.confirmPassword) {
+//       setResponseMessage("Passwords do not match!");
+//       return;
+//     }
 
 //     try {
-//       const response = await axios.post("http://localhost:5001/register", { email, password, username });
-//       console.log("Backend response:", response.data); // Log the response from backend
-//       setResponseMessage(response.data.message);
+//       const response = await axios.post("http://localhost:5001/register", {
+//         username: formData.username,
+//         email: formData.email,
+//         password: formData.password,
+//       });
+
+//       // if (response.data.success) {
+//       //   setResponseMessage("Registration successful! Please login.");
+//       //   navigate("/login");
+//       // }
+
+//       if (response.data.success) {
+//         setResponseMessage("Registration successful! Please login.");
+//         setTimeout(() => navigate("/login"), 2000); // Delay navigation for 2 seconds
+//       }
+
+
 //     } catch (error) {
-//       console.error("Error registering user:", error.response?.data || error);
 //       setResponseMessage(error.response?.data?.message || "Registration failed");
 //     }
 //   };
-  
+
+//   const handleChange = (e) => {
+//     setFormData({
+//       ...formData,
+//       [e.target.name]: e.target.value,
+//     });
+//   };
+
+//   const handleResetMessage = () => {
+//     setResponseMessage("");
+//   };
+
 //   return (
-//     <div>
+//     <div className="auth-container">
 //       <h2>Register</h2>
 //       <form onSubmit={handleSubmit}>
-//         <input
-//           type="text"
-//           placeholder="Username"
-//           value={username}
-//           onChange={(e) => setUsername(e.target.value)}  
-//         />
-//         <input
-//           type="email"
-//           placeholder="Email"
-//           value={email}
-//           onChange={(e) => setEmail(e.target.value)}
-//         />
-//         <input
-//           type="password"
-//           placeholder="Password"
-//           value={password}
-//           onChange={(e) => setPassword(e.target.value)}
-//         />
+//         <div className="form-group">
+//           <input
+//             type="text"
+//             name="username"
+//             placeholder="Username"
+//             value={formData.username}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <div className="form-group">
+//           <input
+//             type="email"
+//             name="email"
+//             placeholder="Email"
+//             value={formData.email}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <div className="form-group">
+//           <input
+//             type="password"
+//             name="password"
+//             placeholder="Password"
+//             value={formData.password}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <div className="form-group">
+//           <input
+//             type="password"
+//             name="confirmPassword"
+//             placeholder="Confirm Password"
+//             value={formData.confirmPassword}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
 //         <button type="submit">Register</button>
 //       </form>
-//       {responseMessage && <p>{responseMessage}</p>}
+//       {responseMessage && (
+//         <div className="error-message">
+//           <p className="message">{responseMessage}</p>
+//           <button onClick={handleResetMessage}>Try Again</button>
+//         </div>
+//       )}
 //     </div>
 //   );
 // }
@@ -112,100 +228,101 @@ export default Register;
 
 
 
-
-// //below for verifying Frontend Request, not sending to DB
+//ok to use (just want to add button to reset))
 // import React, { useState } from "react";
 // import axios from "axios";
+// import { useNavigate } from "react-router-dom";
 
 // function Register() {
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
+//   const [formData, setFormData] = useState({
+//     username: "",
+//     email: "",
+//     password: "",
+//     confirmPassword: "",
+//   });
 //   const [responseMessage, setResponseMessage] = useState("");
+//   const navigate = useNavigate();
 
-//   const handleSubmit = async (event) => {
-//     event.preventDefault();
-  
-//     const user = {
-//       email: "testuser@example.com",
-//       password: "password123",
-//       username: "testuser"
-//     };
-  
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+    
+//     if (formData.password !== formData.confirmPassword) {
+//       setResponseMessage("Passwords do not match!");
+//       return;
+//     }
+
 //     try {
-//       const response = await axios.post("http://localhost:5001/register", user);
-//       console.log("Registration success:", response.data);
+//       const response = await axios.post("http://localhost:5001/register", {
+//         username: formData.username,
+//         email: formData.email,
+//         password: formData.password,
+//       });
+
+//       if (response.data.success) {
+//         setResponseMessage("Registration successful! Please login.");
+//         setTimeout(() => navigate("/login"), 2000);
+//       }
 //     } catch (error) {
-//       console.error("Error registering user:", error.response.data);
+//       setResponseMessage(error.response?.data?.message || "Registration failed");
 //     }
 //   };
 
+//   const handleChange = (e) => {
+//     setFormData({
+//       ...formData,
+//       [e.target.name]: e.target.value,
+//     });
+//   };
+
 //   return (
-//     <div>
+//     <div className="auth-container">
 //       <h2>Register</h2>
 //       <form onSubmit={handleSubmit}>
-//         <input
-//           type="email"
-//           placeholder="Email"
-//           value={email}
-//           onChange={(e) => setEmail(e.target.value)}
-//         />
-//         <input
-//           type="password"
-//           placeholder="Password"
-//           value={password}
-//           onChange={(e) => setPassword(e.target.value)}
-//         />
+//         <div className="form-group">
+//           <input
+//             type="text"
+//             name="username"
+//             placeholder="Username"
+//             value={formData.username}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <div className="form-group">
+//           <input
+//             type="email"
+//             name="email"
+//             placeholder="Email"
+//             value={formData.email}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <div className="form-group">
+//           <input
+//             type="password"
+//             name="password"
+//             placeholder="Password"
+//             value={formData.password}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <div className="form-group">
+//           <input
+//             type="password"
+//             name="confirmPassword"
+//             placeholder="Confirm Password"
+//             value={formData.confirmPassword}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
 //         <button type="submit">Register</button>
 //       </form>
-//       {responseMessage && <p>{responseMessage}</p>}
+//       {responseMessage && <p className="message">{responseMessage}</p>}
 //     </div>
 //   );
 // }
 
 // export default Register;
-
-
-
-
-
-// import React, { useState } from "react";
-
-// const RegisterPage = () => {
-//   const [username, setUsername] = useState("");
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [message, setMessage] = useState("");
-
-//   const handleRegister = () => {
-//     // Simulate registration logic (replace with actual logic)
-//     setMessage("Registration successful! Please log in.");
-//   };
-
-//   return (
-//     <div>
-//       <h2>Register</h2>
-//       {message && <div className="message">{message}</div>}
-//       <input 
-//         type="text" 
-//         value={username} 
-//         onChange={e => setUsername(e.target.value)} 
-//         placeholder="Username" 
-//       />
-//       <input 
-//         type="email" 
-//         value={email} 
-//         onChange={e => setEmail(e.target.value)} 
-//         placeholder="Email" 
-//       />
-//       <input 
-//         type="password" 
-//         value={password} 
-//         onChange={e => setPassword(e.target.value)} 
-//         placeholder="Password" 
-//       />
-//       <button onClick={handleRegister}>Register</button>
-//     </div>
-//   );
-// };
-
-// export default RegisterPage;

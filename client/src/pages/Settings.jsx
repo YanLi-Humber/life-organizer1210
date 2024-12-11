@@ -1,13 +1,89 @@
-import React from 'react';
+import React, { useState } from "react";
+import axios from "axios";
 
-const Settings = () => {
+function Settings({ authState }) {
+  const [formData, setFormData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [responseMessage, setResponseMessage] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (formData.newPassword !== formData.confirmPassword) {
+      setResponseMessage("New passwords do not match!");
+      return;
+    }
+
+    try {
+      const response = await axios.put(
+        "http://localhost:5001/settings",
+        {
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      setResponseMessage(response.data.message || "Password updated successfully!");
+    } catch (error) {
+      setResponseMessage(error.response?.data?.message || "Password update failed");
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
   return (
-    <div>
-      <h2>Settings</h2>
-      <p>Update your preferences here.</p>
+    <div className="settings-container">
+      <h2>Update Password</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <input
+            type="password"
+            name="currentPassword"
+            placeholder="Current Password"
+            value={formData.currentPassword}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <input
+            type="password"
+            name="newPassword"
+            placeholder="New Password"
+            value={formData.newPassword}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm New Password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <button type="submit">Update Password</button>
+      </form>
+      {responseMessage && <p className="message">{responseMessage}</p>}
     </div>
   );
-};
+}
 
 export default Settings;
 

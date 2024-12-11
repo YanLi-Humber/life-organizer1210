@@ -3,77 +3,330 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function Login({ setAuthState }) {
-  const [emailOrUsername, setEmailOrUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    identifier: "",
+    password: "",
+  });
   const [responseMessage, setResponseMessage] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Ensure either username or email is provided
-    if (!emailOrUsername || !password) {
-      setResponseMessage("Please enter both email/username and password.");
-      return;
-    }
-
     try {
-      const response = await axios.post("http://localhost:5001/login", {
-        username: emailOrUsername,
-        email: emailOrUsername,
-        password: password,
-      });
-      console.log("Response:", response.data);
+      const response = await axios.post("http://localhost:5001/login", formData);
 
       if (response.data.token) {
-        // Save token and user info to localStorage
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+
         localStorage.setItem("authToken", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
 
-        // Update the auth state to reflect the login
         setAuthState({
           isLoggedIn: true,
           user: response.data.user,
         });
 
-        // Redirect to the home page after successful login
-        navigate("/home");
-      } else {
-        setResponseMessage("Login failed. Invalid credentials.");
+        setResponseMessage("Login successful!");
+        navigate("/organizer");
       }
     } catch (error) {
-      console.error("Error during login:", error.response?.data || error.message);
       setResponseMessage(error.response?.data?.message || "Login failed");
     }
   };
 
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
   return (
-    <div>
+    <div className="auth-container">
       <h2>Login</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Email or Username"
-          value={emailOrUsername}
-          onChange={(e) => setEmailOrUsername(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-        />
+        <div className="form-group">
+          <input
+            type="text"
+            name="identifier"
+            placeholder="Email or Username"
+            value={formData.identifier}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
         <button type="submit">Login</button>
       </form>
-      <p>{responseMessage}</p>
+      {responseMessage && <p className="message">{responseMessage}</p>}
     </div>
   );
 }
 
 export default Login;
 
+
+
+//ok version, just clear login element after login success
+// import React, { useState } from "react";
+// import axios from "axios";
+// import { useNavigate } from "react-router-dom";
+
+// function Login({ setAuthState }) {
+//   const [formData, setFormData] = useState({
+//     identifier: "",
+//     password: "",
+//   });
+//   const [responseMessage, setResponseMessage] = useState("");
+//   const navigate = useNavigate();
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+
+//     try {
+//       const response = await axios.post("http://localhost:5001/login", formData);
+
+//       if (response.data.token) {
+//         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+
+//         localStorage.setItem("authToken", response.data.token);
+//         localStorage.setItem("user", JSON.stringify(response.data.user));
+
+//         setAuthState({
+//           isLoggedIn: true,
+//           user: response.data.user,
+//         });
+
+//         setResponseMessage("Login successful!");
+//         navigate("/home");
+//       }
+//     } catch (error) {
+//       setResponseMessage(error.response?.data?.message || "Login failed");
+//     }
+//   };
+
+//   const handleChange = (e) => {
+//     setFormData({
+//       ...formData,
+//       [e.target.name]: e.target.value,
+//     });
+//   };
+
+//   return (
+//     <div className="auth-container">
+//       <h2>Login</h2>
+//       <form onSubmit={handleSubmit}>
+//         <div className="form-group">
+//           <input
+//             type="text"
+//             name="identifier"
+//             placeholder="Email or Username"
+//             value={formData.identifier}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <div className="form-group">
+//           <input
+//             type="password"
+//             name="password"
+//             placeholder="Password"
+//             value={formData.password}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <button type="submit">Login</button>
+//       </form>
+//       {responseMessage && <p className="message">{responseMessage}</p>}
+//     </div>
+//   );
+// }
+
+// export default Login;
+
+
+
+// import React, { useState } from "react";
+// import axios from "axios";
+// import { useNavigate } from "react-router-dom";
+
+// function Login({ setAuthState }) {
+//   const [formData, setFormData] = useState({
+//     identifier: "",
+//     password: "",
+//   });
+//   const [responseMessage, setResponseMessage] = useState("");
+//   const navigate = useNavigate();
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+
+//     try {
+//       // const response = await axios.post("http://localhost:5001/login", formData);
+//       const response = await axios.post("http://localhost:5001/login", {
+//         identifier: formData.identifier, // Make sure identifier is handled in the backend
+//         password: formData.password,
+//       });
+      
+
+//       if (response.data.token) {
+//         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+
+//         localStorage.setItem("authToken", response.data.token);
+//         localStorage.setItem("user", JSON.stringify(response.data.user));
+
+//         setAuthState({
+//           isLoggedIn: true,
+//           user: response.data.user,
+//         });
+
+//         setResponseMessage("Login successful!");
+//         navigate("/home");
+//       }
+//     } catch (error) {
+//       setResponseMessage(error.response?.data?.message || "Login failed");
+//     }
+//   };
+
+//   const handleChange = (e) => {
+//     setFormData({
+//       ...formData,
+//       [e.target.name]: e.target.value,
+//     });
+//   };
+
+//   return (
+//     <div className="auth-container">
+//       <h2>Login</h2>
+//       <form onSubmit={handleSubmit}>
+//         <div className="form-group">
+//           <input
+//             type="text"
+//             name="identifier"
+//             placeholder="Email or Username"
+//             value={formData.identifier}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <div className="form-group">
+//           <input
+//             type="password"
+//             name="password"
+//             placeholder="Password"
+//             value={formData.password}
+//             onChange={handleChange}
+//             required
+//           />
+//         </div>
+//         <button type="submit">Login</button>
+//       </form>
+//       {responseMessage && <p className="message">{responseMessage}</p>}
+//     </div>
+//   );
+// }
+
+// export default Login;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import React, { useState } from "react";
+// import axios from "axios";
+// import { useNavigate } from "react-router-dom";
+
+// function Login({ setAuthState }) {
+//   const [emailOrUsername, setEmailOrUsername] = useState("");
+//   const [password, setPassword] = useState("");
+//   const [responseMessage, setResponseMessage] = useState("");
+//   const navigate = useNavigate();
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+
+//     // Ensure either username or email is provided
+//     if (!emailOrUsername || !password) {
+//       setResponseMessage("Please enter both email/username and password.");
+//       return;
+//     }
+
+//     try {
+//       const response = await axios.post("http://localhost:5001/login", {
+//         username: emailOrUsername,
+//         email: emailOrUsername,
+//         password: password,
+//       });
+//       console.log("Response:", response.data);
+
+//       if (response.data.token) {
+//         // Save token and user info to localStorage
+//         localStorage.setItem("authToken", response.data.token);
+//         localStorage.setItem("user", JSON.stringify(response.data.user));
+
+//         // Update the auth state to reflect the login
+//         setAuthState({
+//           isLoggedIn: true,
+//           user: response.data.user,
+//         });
+
+//         // Redirect to the home page after successful login
+//         navigate("/home");
+//       } else {
+//         setResponseMessage("Login failed. Invalid credentials.");
+//       }
+//     } catch (error) {
+//       console.error("Error during login:", error.response?.data || error.message);
+//       setResponseMessage(error.response?.data?.message || "Login failed");
+//     }
+//   };
+
+//   return (
+//     <div>
+//       <h2>Login</h2>
+//       <form onSubmit={handleSubmit}>
+//         <input
+//           type="text"
+//           placeholder="Email or Username"
+//           value={emailOrUsername}
+//           onChange={(e) => setEmailOrUsername(e.target.value)}
+//         />
+
+//         <input
+//           type="password"
+//           placeholder="Password"
+//           value={password}
+//           onChange={(e) => setPassword(e.target.value)}
+//           autoComplete="current-password"
+//         />
+//         <button type="submit">Login</button>
+//       </form>
+//       <p>{responseMessage}</p>
+//     </div>
+//   );
+// }
+
+// export default Login;
 
 
 // import React, { useState } from "react";
@@ -299,3 +552,5 @@ export default Login;
 // }
 
 // export default Login;
+
+

@@ -1,256 +1,297 @@
-import React, { useState } from 'react';
-import axiosInstance from '../utils/axiosInstance';
+import React, { useState } from "react";
+import axios from "axios";
 
-const CreateEvent = ({ user }) => {
-    const [formData, setFormData] = useState({
-        name: '',
-        startDate: '',
-        startTime: '',
-        endDate: '',
-        endTime: '',
-        category: '',
-        partiesInvolved: '',
-        dueDate: '',
-        progress: 'Not started',
-        completionLevel: 0,
-        remark: '',
-        important: false,
-    });
-    const [message, setMessage] = useState('');
+function CreateEvent() {
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    date: "",
+  });
+  const [responseMessage, setResponseMessage] = useState("");
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault(); // Prevent the default form submission behavior
-
-        if (!formData.name || !formData.startDate) {
-            setMessage('Event name and start date are required.');
-            return;
+    try {
+      const response = await axios.post(
+        "http://localhost:5001/events",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
         }
+      );
 
-    // Send the date exactly as entered in the form (local time)
-  //   const formatISODate = (date, time) => {
-  //     return time ? `${date}T${time}:00.000Z` : `${date}T00:00:00.000Z`;
-  // };
-  
-//   const formatISODate = (date, time) => {
-//     return new Date(`${date}T${time || '00:00'}`).toISOString();
-// };
-
-  
-//   const payload = {
-//       ...formData,
-//       startDate: formatISODate(formData.startDate, formData.startTime),
-//       endDate: formData.endDate
-//           ? formatISODate(formData.endDate, formData.endTime)
-//           : null,
-//   };
-  
-
-
-
-//if need to return to previous, use below set
-    //     try {
-    //         const token = localStorage.getItem('token'); // Retrieve the token
-    //         const response = await axiosInstance.post('/events/create', formData, {
-    //             headers: { Authorization: `Bearer ${token}` }, // Include the token in the headers
-    //         });
-
-    //         setMessage('Event created successfully!');
-    //         // res.status(201).json({ success: true, message: 'Event created successfully', event: newEvent }); (can consider use this if have time cause need to apply to all others)
-
-    //         console.log('Event created:', response.data);
-    //     } catch (err) {
-    //         console.error('Error creating event:', err.response?.data || err.message);
-    //         setMessage('Error creating event. Please try again.');
-    //     }
-    // };
-
-
-          try {
-            const timeZone = 'America/Toronto'; // Replace with the desired timezone
-            const startDateTime = new Date(`${formData.startDate}T${formData.startTime || '00:00'}:00`);
-            const endDateTime = formData.endDate
-              ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}:00`)
-              : null;
-
-            const payload = {
-              ...formData,
-              startDate: startDateTime.toISOString(),
-              endDate: endDateTime ? endDateTime.toISOString() : null,
-            };
-
-          const token = localStorage.getItem('token');
-          const response = await axiosInstance.post('/events/create', payload, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          setMessage('Event created successfully!');
-          console.log('Event created:', response.data);
-    } catch (err) {
-          console.error('Error creating event:', err.response?.data || err.message);
-          setMessage('Error creating event. Please try again.');
-    };
-  }
-
-
-    if (!user) {
-        return <p>Please log in to create events.</p>;
+      setResponseMessage(response.data.message || "Event created successfully!");
+    } catch (error) {
+      setResponseMessage(error.response?.data?.message || "Event creation failed");
     }
+  };
 
-    return (
-        <div style={{ textAlign: 'center', marginTop: '50px' }}>
-            <h2>Create Event</h2>
-            <form onSubmit={handleSubmit} style={{ textAlign: 'left', display: 'inline-block' }}>
-                <div style={{ marginBottom: '10px' }}>
-                    <label>Event Name:</label>
-                    <input
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        style={{ display: 'block', width: '100%' }}
-                    />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label>Start Date:</label>
-                    <input
-                        name="startDate"
-                        type="date"
-                        value={formData.startDate}
-                        onChange={handleChange}
-                        required
-                        style={{ display: 'block', width: '100%' }}
-                    />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label>Start Time:</label>
-                    <input
-                        name="startTime"
-                        type="time"
-                        value={formData.startTime}
-                        onChange={handleChange}
-                        style={{ display: 'block', width: '100%' }}
-                    />
-                  </div>
-                  <div style={{ marginBottom: '10px' }}>
-                    <label>End Date:</label>
-                    <input
-                        name="endDate"
-                        type="date"
-                        value={formData.endDate}
-                        onChange={handleChange}
-                        style={{ display: 'block', width: '100%' }}
-                    />
-                  </div>
-                  <div>
-                 <label>End Time:</label>
-                
-                  <input
-                    name="endTime"
-                    type="time"
-                    value={formData.endTime}
-                    onChange={handleChange}
-                    style={{ display: 'block', width: '100%' }}
-                 />
-                 </div>
-                 <div style={{ marginBottom: '10px' }}>
-                  <label>Category:</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    style={{ display: 'block', width: '100%' }}
-                  >
-                    <option value="">Select Category</option>
-                    <option value="Work">Work</option>
-                    <option value="School">School</option>
-                    <option value="Family">Family</option>
-                    <option value="Friend">Friend</option>
-                    <option value="Personal">Personal</option>
-                    <option value="Unclassified">Unclassified</option>
-                  </select>
-                </div>
-                  <div style={{ marginBottom: '10px' }}>
-                  <label>Parties Involved:</label>
-                  <textarea
-                    name="partiesInvolved"
-                    value={formData.partiesInvolved}
-                    onChange={handleChange}
-                    style={{ display: 'block', width: '100%' }}
-                  />
-                  </div>
-                <div style={{ marginBottom: '10px' }}>
-                  <label>Due Date:</label>
-                  <input
-                    name="dueDate"
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={handleChange}
-                    style={{ display: 'block', width: '100%' }}
-                  />
-                </div>
-                        <div style={{ marginBottom: '10px' }}>
-                  <label>Progress:</label>
-                  <select
-                    name="progress"
-                    value={formData.progress}
-                    onChange={handleChange}
-                    style={{ display: 'block', width: '100%' }}
-                  >
-                        <option value="Not started">Not started</option>
-                        <option value="In progress">In progress</option>
-                        <option value="Completed">Completed</option>
-                  </select>
-                </div>
-                {formData.progress === 'In progress' && (
-                  <div style={{ marginBottom: '10px' }}>
-                    <label>Completion Level% (1-99):</label>
-                    <input
-                      name="completionLevel"
-                      type="number"
-                      value={formData.completionLevel}
-                      onChange={handleChange}
-                      min="1"
-                      max="99"
-                      style={{ display: 'block', width: '100%' }}
-                    />
-                  </div>
-                )}
-                  <div style={{ marginBottom: '10px' }}>
-                  <label>Remark:</label>
-                  <textarea
-                    name="remark"
-                    value={formData.remark}
-                    onChange={handleChange}
-                    style={{ display: 'block', width: '100%' }}
-                  />
-                </div>
-                  <div style={{ marginBottom: '10px' }}>
-                  <label>
-                    Important:
-                    <input
-                      name="important"
-                      type="checkbox"
-                      checked={formData.important}
-                      onChange={handleChange}
-                      style={{ marginLeft: '10px' }}
-                    />
-                  </label>
-                </div>
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-                <button type="submit" style={{ padding: '10px 20px' }}>Create Event</button>
-                <button type="button" onClick={clearResults} style={{ padding: '10px 20px', marginLeft: '10px' }}>Clear</button>
-            </form>
-            {message && <p>{message}</p>}
+  return (
+    <div className="event-container">
+      <h2>Create Event</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <input
+            type="text"
+            name="title"
+            placeholder="Event Title"
+            value={formData.title}
+            onChange={handleChange}
+            required
+          />
         </div>
-    );
-};
+        <div className="form-group">
+          <textarea
+            name="description"
+            placeholder="Event Description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+          ></textarea>
+        </div>
+        <div className="form-group">
+          <input
+            type="date"
+            name="date"
+            value={formData.date}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <button type="submit">Create Event</button>
+      </form>
+      {responseMessage && <p className="message">{responseMessage}</p>}
+    </div>
+  );
+}
 
 export default CreateEvent;
+
+
+// import React, { useState } from 'react';
+// import axiosInstance from '../utils/axiosInstance';
+
+// const CreateEvent = ({ user }) => {
+//     const [formData, setFormData] = useState({
+//         name: '',
+//         startDate: '',
+//         startTime: '',
+//         endDate: '',
+//         endTime: '',
+//         category: '',
+//         partiesInvolved: '',
+//         dueDate: '',
+//         progress: 'Not started',
+//         completionLevel: 0,
+//         remark: '',
+//         important: false,
+//     });
+//     const [message, setMessage] = useState('');
+
+//     const handleChange = (e) => {
+//         const { name, value, type, checked } = e.target;
+//         setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+//     };
+
+//     const handleSubmit = async (e) => {
+//         e.preventDefault(); // Prevent the default form submission behavior
+
+//         if (!formData.name || !formData.startDate) {
+//             setMessage('Event name and start date are required.');
+//             return;
+//         }
+
+//           try {
+//             const timeZone = 'America/Toronto'; // Replace with the desired timezone
+//             const startDateTime = new Date(`${formData.startDate}T${formData.startTime || '00:00'}:00`);
+//             const endDateTime = formData.endDate
+//               ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}:00`)
+//               : null;
+
+//             const payload = {
+//               ...formData,
+//               startDate: startDateTime.toISOString(),
+//               endDate: endDateTime ? endDateTime.toISOString() : null,
+//             };
+
+//           const token = localStorage.getItem('token');
+//           const response = await axiosInstance.post('/events/create', payload, {
+//             headers: { Authorization: `Bearer ${token}` },
+//           });
+
+//           setMessage('Event created successfully!');
+//           console.log('Event created:', response.data);
+//     } catch (err) {
+//           console.error('Error creating event:', err.response?.data || err.message);
+//           setMessage('Error creating event. Please try again.');
+//     };
+//   }
+
+
+//     if (!user) {
+//         return <p>Please log in to create events.</p>;
+//     }
+
+//     return (
+//         <div style={{ textAlign: 'center', marginTop: '50px' }}>
+//             <h2>Create Event</h2>
+//             <form onSubmit={handleSubmit} style={{ textAlign: 'left', display: 'inline-block' }}>
+//                 <div style={{ marginBottom: '10px' }}>
+//                     <label>Event Name:</label>
+//                     <input
+//                         name="name"
+//                         value={formData.name}
+//                         onChange={handleChange}
+//                         required
+//                         style={{ display: 'block', width: '100%' }}
+//                     />
+//                 </div>
+//                 <div style={{ marginBottom: '10px' }}>
+//                     <label>Start Date:</label>
+//                     <input
+//                         name="startDate"
+//                         type="date"
+//                         value={formData.startDate}
+//                         onChange={handleChange}
+//                         required
+//                         style={{ display: 'block', width: '100%' }}
+//                     />
+//                 </div>
+//                 <div style={{ marginBottom: '10px' }}>
+//                     <label>Start Time:</label>
+//                     <input
+//                         name="startTime"
+//                         type="time"
+//                         value={formData.startTime}
+//                         onChange={handleChange}
+//                         style={{ display: 'block', width: '100%' }}
+//                     />
+//                   </div>
+//                   <div style={{ marginBottom: '10px' }}>
+//                     <label>End Date:</label>
+//                     <input
+//                         name="endDate"
+//                         type="date"
+//                         value={formData.endDate}
+//                         onChange={handleChange}
+//                         style={{ display: 'block', width: '100%' }}
+//                     />
+//                   </div>
+//                   <div>
+//                  <label>End Time:</label>
+                
+//                   <input
+//                     name="endTime"
+//                     type="time"
+//                     value={formData.endTime}
+//                     onChange={handleChange}
+//                     style={{ display: 'block', width: '100%' }}
+//                  />
+//                  </div>
+//                  <div style={{ marginBottom: '10px' }}>
+//                   <label>Category:</label>
+//                   <select
+//                     name="category"
+//                     value={formData.category}
+//                     onChange={handleChange}
+//                     style={{ display: 'block', width: '100%' }}
+//                   >
+//                     <option value="">Select Category</option>
+//                     <option value="Work">Work</option>
+//                     <option value="School">School</option>
+//                     <option value="Family">Family</option>
+//                     <option value="Friend">Friend</option>
+//                     <option value="Personal">Personal</option>
+//                     <option value="Unclassified">Unclassified</option>
+//                   </select>
+//                 </div>
+//                   <div style={{ marginBottom: '10px' }}>
+//                   <label>Parties Involved:</label>
+//                   <textarea
+//                     name="partiesInvolved"
+//                     value={formData.partiesInvolved}
+//                     onChange={handleChange}
+//                     style={{ display: 'block', width: '100%' }}
+//                   />
+//                   </div>
+//                 <div style={{ marginBottom: '10px' }}>
+//                   <label>Due Date:</label>
+//                   <input
+//                     name="dueDate"
+//                     type="date"
+//                     value={formData.dueDate}
+//                     onChange={handleChange}
+//                     style={{ display: 'block', width: '100%' }}
+//                   />
+//                 </div>
+//                         <div style={{ marginBottom: '10px' }}>
+//                   <label>Progress:</label>
+//                   <select
+//                     name="progress"
+//                     value={formData.progress}
+//                     onChange={handleChange}
+//                     style={{ display: 'block', width: '100%' }}
+//                   >
+//                         <option value="Not started">Not started</option>
+//                         <option value="In progress">In progress</option>
+//                         <option value="Completed">Completed</option>
+//                   </select>
+//                 </div>
+//                 {formData.progress === 'In progress' && (
+//                   <div style={{ marginBottom: '10px' }}>
+//                     <label>Completion Level% (1-99):</label>
+//                     <input
+//                       name="completionLevel"
+//                       type="number"
+//                       value={formData.completionLevel}
+//                       onChange={handleChange}
+//                       min="1"
+//                       max="99"
+//                       style={{ display: 'block', width: '100%' }}
+//                     />
+//                   </div>
+//                 )}
+//                   <div style={{ marginBottom: '10px' }}>
+//                   <label>Remark:</label>
+//                   <textarea
+//                     name="remark"
+//                     value={formData.remark}
+//                     onChange={handleChange}
+//                     style={{ display: 'block', width: '100%' }}
+//                   />
+//                 </div>
+//                   <div style={{ marginBottom: '10px' }}>
+//                   <label>
+//                     Important:
+//                     <input
+//                       name="important"
+//                       type="checkbox"
+//                       checked={formData.important}
+//                       onChange={handleChange}
+//                       style={{ marginLeft: '10px' }}
+//                     />
+//                   </label>
+//                 </div>
+
+//                 <button type="submit" style={{ padding: '10px 20px' }}>Create Event</button>
+//                 <button type="button" onClick={clearResults} style={{ padding: '10px 20px', marginLeft: '10px' }}>Clear</button>
+//             </form>
+//             {message && <p>{message}</p>}
+//         </div>
+//     );
+// };
+
+// export default CreateEvent;
 
 
 // import React, { useState } from 'react';
